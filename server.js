@@ -1,34 +1,36 @@
 require("dotenv").config();
 
 const express = require("express");
+const path = require("path");
 const { connectDB, getDB } = require("./db");
 const { ObjectId } = require("mongodb");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(express.json()); // ✅ FIXED
-app.use(express.static("public"));
+// Middleware
+app.use(express.json());
+app.use(express.static("public")); // 🔥 VERY IMPORTANT
 
 async function startServer() {
     await connectDB();
 
-    // GET all menus
+    // ================= GET =================
     app.get("/menu", async (req, res) => {
         try {
             const db = getDB();
             const menus = await db.collection("menus").find().toArray();
             res.json(menus);
         } catch (err) {
-            console.error(err);
-            res.status(500).json({ error: "Fetch error" });
+            console.error("GET ERROR:", err);
+            res.status(500).json({ error: err.message });
         }
     });
 
-    // ADD menu
+    // ================= POST =================
     app.post("/menu", async (req, res) => {
         try {
-            console.log("BODY:", req.body); // 🔥 debug
+            console.log("BODY:", req.body);
 
             const db = getDB();
             const { date, breakfast, lunch, dinner } = req.body;
@@ -48,11 +50,11 @@ async function startServer() {
 
         } catch (err) {
             console.error("POST ERROR:", err);
-            res.status(500).json({ error: "Server error while adding menu" });
+            res.status(500).json({ error: err.message });
         }
     });
 
-    // UPDATE
+    // ================= UPDATE =================
     app.put("/menu/:id", async (req, res) => {
         try {
             const db = getDB();
@@ -65,12 +67,12 @@ async function startServer() {
             res.json({ message: "Updated" });
 
         } catch (err) {
-            console.error(err);
-            res.status(500).json({ error: "Update error" });
+            console.error("PUT ERROR:", err);
+            res.status(500).json({ error: err.message });
         }
     });
 
-    // DELETE
+    // ================= DELETE =================
     app.delete("/menu/:id", async (req, res) => {
         try {
             const db = getDB();
@@ -82,9 +84,14 @@ async function startServer() {
             res.json({ message: "Deleted" });
 
         } catch (err) {
-            console.error(err);
-            res.status(500).json({ error: "Delete error" });
+            console.error("DELETE ERROR:", err);
+            res.status(500).json({ error: err.message });
         }
+    });
+
+    // Optional: open homepage
+    app.get("/", (req, res) => {
+        res.sendFile(path.join(__dirname, "public", "dashboard.html"));
     });
 
     app.listen(PORT, () => {
