@@ -1,33 +1,24 @@
-require("dotenv").config(); // load .env
+require("dotenv").config();
 
 const { MongoClient } = require("mongodb");
 
-const url = process.env.MONGO_URL; // 🔥 from .env
-
-if (!url) {
-    console.error("❌ MONGO_URL not found in .env");
-    process.exit(1);
-}
-
-const client = new MongoClient(url);
+const client = new MongoClient(process.env.MONGO_URL);
 
 let db;
 
 async function connectDB() {
     try {
         await client.connect();
-        db = client.db("pg_menu"); // database name
+        db = client.db("pg_menu");
         console.log("✅ MongoDB Atlas Connected");
     } catch (err) {
-        console.error("❌ DB Connection Error:", err);
+        console.error("❌ DB ERROR:", err);
         process.exit(1);
     }
 }
 
 function getDB() {
-    if (!db) {
-        throw new Error("❌ DB not initialized. Call connectDB first.");
-    }
+    if (!db) throw new Error("DB not connected");
     return db;
 }
 
