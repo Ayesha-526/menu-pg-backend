@@ -1,6 +1,6 @@
 require("dotenv").config();
 const express = require("express");
-const cors = require("cors"); // 1. Import CORS
+const cors = require("cors");
 const path = require("path");
 const { connectDB, getDB } = require("./db");
 const { ObjectId } = require("mongodb");
@@ -9,11 +9,8 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // ================= MIDDLEWARE =================
-// Allow requests from your frontend domain
 app.use(cors()); 
-// Parse incoming JSON
 app.use(express.json()); 
-// Serve static files (if you have them in a /public folder)
 app.use(express.static("public")); 
 
 async function startServer() {
@@ -25,7 +22,8 @@ async function startServer() {
         app.get("/menu", async (req, res) => {
             try {
                 const db = getDB();
-                const menus = await db.collection("menus").find().toArray();
+                // Sorting by date (-1) ensures the latest menu is always at the end/top
+                const menus = await db.collection("menus").find().sort({ date: 1 }).toArray();
                 res.status(200).json(menus);
             } catch (err) {
                 console.error("GET ERROR:", err);
@@ -36,16 +34,16 @@ async function startServer() {
         // ================= POST NEW MENU =================
         app.post("/menu", async (req, res) => {
             try {
-                const { date, breakfast, lunch, dinner } = req.body;
+                const { date, day, breakfast, lunch, dinner } = req.body;
 
-                // Validation
-                if (!date || !breakfast || !lunch || !dinner) {
+                if (!date || !day || !breakfast || !lunch || !dinner) {
                     return res.status(400).json({ error: "All fields are required" });
                 }
 
                 const db = getDB();
                 const result = await db.collection("menus").insertOne({
                     date,
+                    day,
                     breakfast,
                     lunch,
                     dinner,
@@ -102,7 +100,7 @@ async function startServer() {
             }
         });
 
-        // Catch-all for HTML (Optional)
+        // Catch-all for HTML
         app.get("/", (req, res) => {
             res.sendFile(path.join(__dirname, "public", "dashboard.html"));
         });
@@ -113,7 +111,7 @@ async function startServer() {
 
     } catch (error) {
         console.error("❌ Database connection failed:", error);
-        process.exit(1); // Stop the server if DB fails
+        process.exit(1); 
     }
 }
 
